@@ -1,4 +1,3 @@
-// import { add } from "./commands/add.js";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,51 +7,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-// //console.log("Module add imported successfully"); // Add this line for debugging
-// import { Command } from "commander";
-// process.on("SIGINT", () => process.exit(0));
-// process.on("SIGTERM", () => process.exit(0));
-// async function main() {
-//   const program = new Command()
-//     .name("agentgenesis")
-//     .description("add AI components to your project")
-//     .version("1.0.0", "-v, --version", "display the version number");
-//   program.addCommand(add);
-//   program.parse();
-// }
-// main().catch((err) => {
-//   console.error(err);
-//   process.exit(1);
-// });
-import { program } from "commander";
-import { addComponent } from "./commands/add.js";
-program.name("agentgenesis").description("AgentGenesis CLI").version("1.0.0");
-program
-    .command("add <componentName>")
-    .description("Add an AgentGenesis component to your project")
-    .option("-c, --components <components...>", "Components to add")
-    .option("-y, --yes", "Skip confirmation prompt")
-    .option("-o, --overwrite", "Overwrite existing component")
-    .option("-a, --all", "Add all components")
-    .option("-C, --cwd <cwd>", "Working directory", process.cwd())
-    .action((componentName, opts) => __awaiter(void 0, void 0, void 0, function* () {
+import { Command } from "commander";
+import chalk from "chalk";
+import prompts from "prompts";
+import path from "path";
+import { installComponent } from "../src/commands/installComponent";
+export const add = new Command()
+    .name("add")
+    .description("Add a component to your project")
+    .argument("<component>", "The component to add")
+    .option("-y, --yes", "Skip confirmation prompt", false)
+    .action((component, options) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const components = opts.components
-            ? opts.components.map((component) => component)
-            : [];
-        const options = {
-            componentName,
-            components,
-            yes: opts.yes || false,
-            overwrite: opts.overwrite || false,
-            cwd: opts.cwd || process.cwd(),
-            all: opts.all || false,
-        };
-        yield addComponent(options);
-        console.log(`Component ${componentName} added successfully!`);
+        const targetDir = path.resolve(process.cwd(), "src/components", component);
+        if (!options.yes) {
+            const response = yield prompts({
+                type: "confirm",
+                name: "confirm",
+                message: `Add ${component} to your project?`,
+                initial: true,
+            });
+            if (!response.confirm) {
+                console.log(chalk.yellow("Operation cancelled."));
+                return;
+            }
+        }
+        yield installComponent(component, targetDir);
+        console.log(chalk.green(`Component ${component} added to ${targetDir}.`));
     }
     catch (error) {
-        console.error(`Error adding component: ${error.message}`);
+        console.error(chalk.red("An error occurred:", error));
     }
 }));
-program.parse(process.argv);

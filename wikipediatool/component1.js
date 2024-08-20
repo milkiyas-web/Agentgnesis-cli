@@ -1,1 +1,0 @@
-// component1 component code goes here

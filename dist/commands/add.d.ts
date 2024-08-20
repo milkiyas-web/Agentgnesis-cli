@@ -1,10 +1,3 @@
-declare function addComponent(options: {
-    componentName: string;
-    components: string[];
-    yes: boolean;
-    overwrite: boolean;
-    cwd: string;
-    all: boolean;
-}): Promise<void>;
-export { addComponent };
+import { Command } from "commander";
+export declare const add: Command;
 //# sourceMappingURL=add.d.ts.map

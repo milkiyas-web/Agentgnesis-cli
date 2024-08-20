@@ -1,60 +1,39 @@
-// import { add } from "./commands/add.js";
+import { Command } from "commander";
+import chalk from "chalk";
+import prompts from "prompts";
+import path from "path";
+import { installComponent } from "../src/commands/installComponent";
 
-// //console.log("Module add imported successfully"); // Add this line for debugging
-
-// import { Command } from "commander";
-
-// process.on("SIGINT", () => process.exit(0));
-// process.on("SIGTERM", () => process.exit(0));
-
-// async function main() {
-//   const program = new Command()
-//     .name("agentgenesis")
-//     .description("add AI components to your project")
-//     .version("1.0.0", "-v, --version", "display the version number");
-
-//   program.addCommand(add);
-
-//   program.parse();
-// }
-
-// main().catch((err) => {
-//   console.error(err);
-//   process.exit(1);
-// });
-
-import { program } from "commander";
-import { addComponent } from "./commands/add.js";
-
-program.name("agentgenesis").description("AgentGenesis CLI").version("1.0.0");
-
-program
-  .command("add <componentName>")
-  .description("Add an AgentGenesis component to your project")
-  .option("-c, --components <components...>", "Components to add")
-  .option("-y, --yes", "Skip confirmation prompt")
-  .option("-o, --overwrite", "Overwrite existing component")
-  .option("-a, --all", "Add all components")
-  .option("-C, --cwd <cwd>", "Working directory", process.cwd())
-  .action(async (componentName: string, opts) => {
+export const add = new Command()
+  .name("add")
+  .description("Add a component to your project")
+  .argument("<component>", "The component to add")
+  .option("-y, --yes", "Skip confirmation prompt", false)
+  .action(async (component, options) => {
     try {
-      const components = opts.components
-        ? opts.components.map((component: string) => component)
-        : [];
-      const options = {
-        componentName,
-        components,
-        yes: opts.yes || false,
-        overwrite: opts.overwrite || false,
-        cwd: opts.cwd || process.cwd(),
-        all: opts.all || false,
-      };
+      const targetDir = path.resolve(
+        process.cwd(),
+        "src/components",
+        component
+      );
 
-      await addComponent(options);
-      console.log(`Component ${componentName} added successfully!`);
-    } catch (error: any) {
-      console.error(`Error adding component: ${error.message}`);
+      if (!options.yes) {
+        const response = await prompts({
+          type: "confirm",
+          name: "confirm",
+          message: `Add ${component} to your project?`,
+          initial: true,
+        });
+
+        if (!response.confirm) {
+          console.log(chalk.yellow("Operation cancelled."));
+          return;
+        }
+      }
+
+      await installComponent(component, targetDir);
+      console.log(chalk.green(`Component ${component} added to ${targetDir}.`));
+    } catch (error) {
+      console.error(chalk.red("An error occurred:", error));
     }
   });
-
-program.parse(process.argv);
